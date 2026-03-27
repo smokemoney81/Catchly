@@ -64,6 +64,7 @@ function LayoutContent({ children, currentPageName }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [voiceOverlayOpen, setVoiceOverlayOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [isUserLoading, setIsUserLoading] = useState(true);
   const [scrollPositions, setScrollPositions] = useState({});
   const [previousPage, setPreviousPage] = useState(null);
   const [wakeWordDetector, setWakeWordDetector] = useState(null);
@@ -106,6 +107,8 @@ function LayoutContent({ children, currentPageName }) {
     } catch (error) {
       console.warn("User not logged in or error fetching user data:", error);
       setUser(null);
+    } finally {
+      setIsUserLoading(false);
     }
   };
 
@@ -155,6 +158,11 @@ function LayoutContent({ children, currentPageName }) {
       stopSession();
     };
   }, [user?.email]);
+
+  useEffect(() => {
+    // Sofort beim Start User laden
+    refreshUser();
+  }, []);
 
   useEffect(() => {
     if (currentPageName !== 'Home') {
@@ -290,6 +298,15 @@ function LayoutContent({ children, currentPageName }) {
 
   const isGuest = !user;
   const isDemo = user?.is_demo_user === true;
+
+  // Warte bis User-Status geladen ist
+  if (isUserLoading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-gray-950">
+        <div className="w-8 h-8 border-4 border-gray-700 border-t-cyan-400 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   // Gastmodus: Weiterleitung falls Seite nicht erlaubt
   if (isGuest && !isGuestAllowedPage(currentPageName) && currentPageName !== 'Home') {

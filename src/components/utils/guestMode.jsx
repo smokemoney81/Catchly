@@ -10,6 +10,11 @@ export const GUEST_ALLOWED_PAGES = [
   'Logbook',
   'Log',
   'Home',
+  'Login',
+  'Start',
+  'AGB',
+  'Datenschutz',
+  'Impressum',
 ];
 
 export function isGuestAllowedPage(pageName) {
