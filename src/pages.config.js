@@ -70,6 +70,7 @@ import FunctionRatings from './pages/FunctionRatings';
 import Gear from './pages/Gear';
 import GearV1 from './pages/GearV1';
 import Home from './pages/Home';
+import Login from './pages/Login';
 import Impressum from './pages/Impressum';
 import KiBuddyBeta from './pages/KiBuddyBeta';
 import Licenses from './pages/Licenses';
