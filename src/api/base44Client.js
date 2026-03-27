@@ -92,7 +92,7 @@ const auth = {
 
   // Leitet zur Login-Seite weiter
   redirectToLogin(redirectUrl) {
-    const url = redirectUrl ? `/login?redirect=${encodeURIComponent(redirectUrl)}` : '/login';
+    const url = redirectUrl ? `/Login?redirect=${encodeURIComponent(redirectUrl)}` : '/Login';
     window.location.href = url;
   },
 

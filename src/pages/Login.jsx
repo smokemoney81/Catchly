@@ -1,27 +1,37 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/lib/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
-import { Fish, Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Fish, Mail, Lock, Eye, EyeOff, Loader2, User } from 'lucide-react';
 
 export default function Login() {
-  const { login, loginWithGoogle } = useAuth();
+  const { login, loginWithGoogle, register } = useAuth();
   const navigate = useNavigate();
 
+  const [mode, setMode] = useState('login'); // 'login' | 'register'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setLoading(true);
     try {
-      await login(email, password);
-      navigate('/dashboard');
+      if (mode === 'login') {
+        await login(email, password);
+        navigate('/Dashboard');
+      } else {
+        await register(email, password, fullName);
+        setSuccess('Registrierung erfolgreich! Bitte E-Mail bestätigen.');
+        setMode('login');
+      }
     } catch (err) {
-      setError(err.message ?? 'Login fehlgeschlagen');
+      setError(err.message ?? 'Fehler aufgetreten');
     } finally {
       setLoading(false);
     }
@@ -50,18 +60,49 @@ export default function Login() {
           <p className="text-gray-400 text-sm mt-1">Dein intelligentes Fangbuch</p>
         </div>
 
-        {/* Card */}
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-4">
-          <h2 className="text-xl font-semibold text-white text-center">Anmelden</h2>
+          {/* Tab */}
+          <div className="flex rounded-xl overflow-hidden border border-gray-700">
+            <button
+              onClick={() => { setMode('login'); setError(''); }}
+              className={`flex-1 py-2 text-sm font-medium transition-colors ${mode === 'login' ? 'bg-cyan-600 text-white' : 'text-gray-400 hover:text-white'}`}
+            >
+              Anmelden
+            </button>
+            <button
+              onClick={() => { setMode('register'); setError(''); }}
+              className={`flex-1 py-2 text-sm font-medium transition-colors ${mode === 'register' ? 'bg-cyan-600 text-white' : 'text-gray-400 hover:text-white'}`}
+            >
+              Registrieren
+            </button>
+          </div>
 
           {error && (
             <div className="bg-red-900/30 border border-red-700/50 rounded-lg p-3 text-red-400 text-sm">
               {error}
             </div>
           )}
+          {success && (
+            <div className="bg-green-900/30 border border-green-700/50 rounded-lg p-3 text-green-400 text-sm">
+              {success}
+            </div>
+          )}
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            {/* Email */}
+          <form onSubmit={handleSubmit} className="space-y-3">
+            {mode === 'register' && (
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={e => setFullName(e.target.value)}
+                  placeholder="Vollständiger Name"
+                  required
+                  className="w-full bg-gray-800 border border-gray-700 text-white pl-10 pr-4 py-3 rounded-xl placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition-colors"
+                />
+              </div>
+            )}
+
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
               <input
@@ -74,7 +115,6 @@ export default function Login() {
               />
             </div>
 
-            {/* Password */}
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
               <input
@@ -83,13 +123,11 @@ export default function Login() {
                 onChange={e => setPassword(e.target.value)}
                 placeholder="Passwort"
                 required
+                minLength={6}
                 className="w-full bg-gray-800 border border-gray-700 text-white pl-10 pr-12 py-3 rounded-xl placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition-colors"
               />
-              <button
-                type="button"
-                onClick={() => setShowPw(!showPw)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
-              >
+              <button type="button" onClick={() => setShowPw(!showPw)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300">
                 {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
@@ -99,8 +137,8 @@ export default function Login() {
               disabled={loading}
               className="w-full bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-700 hover:to-emerald-700 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-all flex items-center justify-center gap-2"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-              Anmelden
+              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+              {mode === 'login' ? 'Anmelden' : 'Konto erstellen'}
             </button>
           </form>
 
@@ -113,7 +151,6 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Google */}
           <button
             onClick={handleGoogle}
             className="w-full bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white font-medium py-3 rounded-xl transition-all flex items-center justify-center gap-3"
@@ -126,14 +163,14 @@ export default function Login() {
             </svg>
             Mit Google anmelden
           </button>
-        </div>
 
-        <p className="text-center text-gray-500 text-sm mt-4">
-          Noch kein Konto?{' '}
-          <Link to="/register" className="text-cyan-400 hover:text-cyan-300">
-            Registrieren
-          </Link>
-        </p>
+          <button
+            onClick={() => navigate('/Dashboard')}
+            className="w-full text-gray-500 hover:text-gray-300 text-sm py-2 transition-colors"
+          >
+            Als Gast fortfahren
+          </button>
+        </div>
       </div>
     </div>
   );
