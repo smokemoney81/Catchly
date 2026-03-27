@@ -1,10 +1,9 @@
+@import './styles/hover-states-mobile-first.css';
+@import './styles/gradient-animations-optimized.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Import optimized CSS modules */
-@import './styles/hover-states-mobile-first.css';
-@import './styles/gradient-animations-optimized.css';
 
 @layer base {
   /* Hardware acceleration for smooth animations */
