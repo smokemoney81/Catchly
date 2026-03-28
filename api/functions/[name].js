@@ -1,7 +1,7 @@
 export const config = { runtime: 'edge' };
 
-const SUPABASE_URL = 'https://vecxtgwxqzrogthqqdys.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_3x3ObpWRTlVSiXo8Y0TvbA_mTeAMcYW';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vecxtgwxqzrogthqqdys.supabase.co';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'sb_publishable_3x3ObpWRTlVSiXo8Y0TvbA_mTeAMcYW';
 
 const FUNCTION_MAP = {
   textToSpeech: 'tts', backendTextToSpeech: 'tts', geminiTextToSpeech: 'tts',
