@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useHaptic } from "@/components/utils/HapticFeedback";
 import { useSound } from "@/components/utils/SoundManager";
 import { useLanguage } from "@/components/i18n/LanguageContext";
-import { User } from "@/entities/User";
-import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
+import { supabase } from "@/lib/supabase";
 import { AnimatePresence, motion } from "framer-motion";
 
 import {
@@ -17,34 +17,7 @@ export default function Sidebar({ isOpen, setIsOpen, currentPageName }) {
   const { triggerHaptic } = useHaptic();
   const { playSound } = useSound();
   const { t } = useLanguage();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const currentUser = await User.me();
-        setUser(currentUser);
-      } catch (error) {
-        console.error("Fehler beim Laden der Benutzerdaten in der Sidebar:", error);
-        setUser(null);
-      }
-      setLoading(false);
-    };
-
-    loadUser();
-
-    const handleUserUpdate = () => {
-      console.log('User refresh request received, reloading user data in sidebar.');
-      loadUser();
-    };
-
-    window.addEventListener('user-refresh-request', handleUserUpdate);
-
-    return () => {
-      window.removeEventListener('user-refresh-request', handleUserUpdate);
-    };
-  }, []);
+  const { user } = useAuth();
 
   const menuItems = [
     { name: "Dashboard", path: "Dashboard", key: "nav.dashboard" },
@@ -244,7 +217,7 @@ export default function Sidebar({ isOpen, setIsOpen, currentPageName }) {
                 onClick={() => {
                   triggerHaptic('medium');
                   playSound('click');
-                  base44.auth.logout(createPageUrl('Home'));
+                  supabase.auth.signOut().then(() => { window.location.href = '/'; });
                 }}
                 className="flex items-center gap-3 w-full text-left px-4 py-2 rounded-lg transition-all text-sm text-red-400 active:text-red-300 active:bg-red-500/20 active:scale-95 focus:ring-2 focus:ring-red-400 min-h-[44px]"
                 aria-label="Abmelden"

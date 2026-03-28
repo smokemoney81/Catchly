@@ -4,6 +4,40 @@
 import { supabase } from '@/lib/supabase';
 
 // ─────────────────────────────────────────────
+// SHARED USER CACHE - verhindert Lock-Konflikte
+// ─────────────────────────────────────────────
+let _cachedUser = null;
+let _cacheTime = 0;
+let _pendingGetUser = null;
+const CACHE_TTL = 30000; // 30 Sekunden Cache
+
+async function getCachedUser() {
+  const now = Date.now();
+  if (_cachedUser && (now - _cacheTime) < CACHE_TTL) {
+    return _cachedUser;
+  }
+  // Verhindert gleichzeitige parallele Aufrufe (Lock-Konflikt)
+  if (_pendingGetUser) return _pendingGetUser;
+  _pendingGetUser = supabase.auth.getSession().then(({ data: { session } }) => {
+    _cachedUser = session?.user ?? null;
+    _cacheTime = Date.now();
+    _pendingGetUser = null;
+    return _cachedUser;
+  }).catch(() => {
+    _pendingGetUser = null;
+    return null;
+  });
+  return _pendingGetUser;
+}
+
+// Cache invalidieren bei Auth-Änderungen
+supabase.auth.onAuthStateChange((_event, session) => {
+  _cachedUser = session?.user ?? null;
+  _cacheTime = Date.now();
+  _pendingGetUser = null;
+});
+
+// ─────────────────────────────────────────────
 // ENTITY FACTORY
 // ─────────────────────────────────────────────
 function createEntity(tableName) {
@@ -39,7 +73,7 @@ function createEntity(tableName) {
       return data;
     },
     async create(payload) {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCachedUser();
       const row = {
         ...payload,
         created_by: user?.email ?? null,
@@ -64,7 +98,7 @@ function createEntity(tableName) {
       if (error) throw error;
     },
     async bulkCreate(rows) {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCachedUser();
       const ts = new Date().toISOString();
       const enriched = rows.map(r => ({
         ...r,
@@ -86,8 +120,8 @@ function createEntity(tableName) {
 const auth = {
   // Prüft ob User eingeloggt ist
   async isAuthenticated() {
-    const { data: { session } } = await supabase.auth.getSession();
-    return !!session?.user;
+    const user = await getCachedUser();
+    return !!user;
   },
 
   // Leitet zur Login-Seite weiter
@@ -98,7 +132,7 @@ const auth = {
 
   // Aktuellen User abrufen
   async me() {
-    const { data: { user }, error } = await supabase.auth.getUser();
+    const user = await getCachedUser(); const error = null;
     if (error || !user) return null;
     const { data: profile } = await supabase
       .from('profiles').select('*').eq('id', user.id).single();
@@ -120,7 +154,7 @@ const auth = {
   },
 
   async updateMe(payload) {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCachedUser();
     if (!user) throw new Error('Not authenticated');
     const { data, error } = await supabase
       .from('profiles')
@@ -140,7 +174,7 @@ const auth = {
   },
 
   async getUser() {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCachedUser();
     return user;
   },
 

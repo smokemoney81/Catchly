@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { useAuth } from '@/lib/AuthContext';
 
 const PlanContext = createContext();
 
@@ -12,50 +12,46 @@ export function usePlan() {
 }
 
 export function PlanProvider({ children }) {
-  const [plan, setPlan] = useState(null);
+  const { user } = useAuth();
+  const [plan, setPlan] = useState({ id: 'free', name: 'Kostenlos', is_active: false });
   const [loading, setLoading] = useState(true);
 
-  const loadPlan = async () => {
-    setLoading(true);
-    try {
-      const response = await base44.functions.invoke('getPlanStatus');
-      if (response.data && response.data.plan) {
-        setPlan(response.data.plan);
-      } else {
-        setPlan({ id: 'free', name: 'Kostenlos', is_active: false });
-      }
-    } catch (error) {
-      console.error('[PlanContext] Error loading plan:', error);
+  useEffect(() => {
+    // Plan direkt aus dem User-Profil lesen - kein extra API-Call nötig
+    if (user) {
+      const planId = user.premium_plan_id || 'free';
+      const planNames = {
+        'free': 'Kostenlos',
+        'basic': 'Basic',
+        'pro': 'Pro',
+        'elite': 'Elite',
+        'ultimate': 'Ultimate',
+      };
+      setPlan({
+        id: planId,
+        name: planNames[planId] || 'Kostenlos',
+        is_active: planId !== 'free',
+      });
+    } else {
       setPlan({ id: 'free', name: 'Kostenlos', is_active: false });
     }
     setLoading(false);
-  };
-
-  useEffect(() => {
-    loadPlan();
-    
-    window.addEventListener('plan-updated', loadPlan);
-    return () => window.removeEventListener('plan-updated', loadPlan);
-  }, []);
+  }, [user]);
 
   const hasFeature = (requiredPlan) => {
     if (!plan) return false;
-    
-    const planHierarchy = { 
-      'free': 0, 
-      'basic': 1, 
-      'pro': 2, 
-      'elite': 3, 
-      'ultimate': 4 
+    const planHierarchy = {
+      'free': 0, 'basic': 1, 'pro': 2, 'elite': 3, 'ultimate': 4
     };
     const userLevel = planHierarchy[plan.id] || 0;
     const requiredLevel = planHierarchy[requiredPlan] || 0;
-    
     return userLevel >= requiredLevel;
   };
 
+  const reload = () => {}; // Kein Reload nötig, kommt aus AuthContext
+
   return (
-    <PlanContext.Provider value={{ plan, loading, hasFeature, reload: loadPlan }}>
+    <PlanContext.Provider value={{ plan, loading, hasFeature, reload }}>
       {children}
     </PlanContext.Provider>
   );
