@@ -16,8 +16,8 @@ async function getCachedUser() {
   if (_cachedUser && (now - _cacheTime) < CACHE_TTL) {
     return _cachedUser;
   }
-  // Verhindert gleichzeitige parallele Aufrufe (Lock-Konflikt)
   if (_pendingGetUser) return _pendingGetUser;
+  // getSession() liest aus localStorage - KEIN Netzwerk-Call, KEIN Lock
   _pendingGetUser = supabase.auth.getSession().then(({ data: { session } }) => {
     _cachedUser = session?.user ?? null;
     _cacheTime = Date.now();
@@ -30,7 +30,7 @@ async function getCachedUser() {
   return _pendingGetUser;
 }
 
-// Cache invalidieren bei Auth-Änderungen
+// Cache bei Auth-Änderungen sofort aktualisieren
 supabase.auth.onAuthStateChange((_event, session) => {
   _cachedUser = session?.user ?? null;
   _cacheTime = Date.now();

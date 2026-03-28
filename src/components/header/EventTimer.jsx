@@ -27,51 +27,61 @@ function EventTimer() {
       const isAuth = await base44.auth.isAuthenticated();
       if (!isAuth) return;
 
-      const user = await base44.auth.me();
-      const events = await base44.entities.AppEvent.filter({ is_active: true });
+      // Events laden - wenn keine da oder Fehler, einfach nichts anzeigen
+      let events = [];
+      try {
+        events = await base44.entities.AppEvent.filter({ is_active: true });
+      } catch (e) {
+        return; // Kein Event = kein Timer
+      }
+      
       if (!events || events.length === 0) return;
 
       const event = events[0];
+      if (!event.start_date || !event.end_date) return;
+      
       const now = new Date();
       const eventStart = new Date(event.start_date);
       const eventEnd = new Date(event.end_date);
       if (now < eventStart || now > eventEnd) return;
 
-      const sessions = await base44.entities.UsageSession.filter({ user_id: user.email });
-
+      // Sessions nur laden wenn Event aktiv
       let seconds = 0;
-      for (const session of sessions) {
-        const start = new Date(session.started_at);
-        if (start < eventStart || start > eventEnd) continue;
-        if (session.status === 'stopped' && session.stopped_at) {
-          seconds += Math.floor((new Date(session.stopped_at) - start) / 1000);
-        } else if (session.status === 'active') {
-          seconds += Math.floor((new Date() - start) / 1000);
+      try {
+        const user = await base44.auth.me();
+        if (!user) return;
+        const sessions = await base44.entities.UsageSession.filter({ user_id: user.id });
+        for (const session of sessions) {
+          const start = new Date(session.started_at);
+          if (start < eventStart || start > eventEnd) continue;
+          if (session.status === 'stopped' && session.stopped_at) {
+            seconds += Math.floor((new Date(session.stopped_at) - start) / 1000);
+          } else if (session.status === 'active') {
+            seconds += Math.floor((new Date() - start) / 1000);
+          }
         }
+      } catch (e) {
+        // Sessions nicht verfügbar - Timer trotzdem anzeigen mit 0
       }
 
       setTotalSeconds(seconds);
       setVisible(true);
-
       intervalRef.current = setInterval(() => {
         setTotalSeconds(prev => prev + 1);
       }, 1000);
     } catch (error) {
-      console.error("Fehler beim Laden der Event-Zeit:", error);
+      // Kein Fehler anzeigen - Timer bleibt versteckt
     }
   };
 
   if (!visible) return null;
 
   return (
-    <Link to={createPageUrl("Events")}>
-      <div className="flex items-center bg-gray-900/80 border border-cyan-500/30 rounded-md px-2 py-1 cursor-pointer hover:border-cyan-400/60 transition-colors">
-        <span className="font-mono text-[11px] text-cyan-400 tracking-widest">
-          {formatTime(totalSeconds)}
-        </span>
-      </div>
+    <Link to={createPageUrl("Events")} className="flex items-center gap-1 text-xs text-cyan-400 font-mono bg-cyan-400/10 px-2 py-1 rounded-full border border-cyan-400/30">
+      <span>⏱</span>
+      <span>{formatTime(totalSeconds)}</span>
     </Link>
   );
 }
 
-export default React.memo(EventTimer);
+export default EventTimer;
