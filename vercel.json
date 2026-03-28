@@ -16,7 +16,11 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!.well-known|icons|manifest.json|sw.js|favicon.ico).*)",
+      "source": "/api/functions/:name",
+      "destination": "/api/functions/:name"
+    },
+    {
+      "source": "/((?!\\.well-known|icons|manifest\\.json|sw\\.js|favicon\\.ico|api).*)",
       "destination": "/index.html"
     }
   ]
