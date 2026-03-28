@@ -41,7 +41,7 @@ export default function SEO() {
     setLink("apple-touch-icon", "/apple-touch-icon.png");
     
     // PWA Manifest - zeigt auf unsere Backend-Funktion
-    setLink("manifest", "/api/functions/manifest", "application/manifest+json");
+    setLink("manifest", "/manifest.json", "application/manifest+json");
   }, []);
 
   return null;

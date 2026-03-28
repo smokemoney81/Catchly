@@ -248,6 +248,29 @@ export const base44 = {
     WaterAnalysisHistory: createEntity('water_analysis_history'),
     FishingEvent: createEntity('fishing_events'),
     ExamQuestion: createEntity('exam_questions'),
+    // Fehlende Entities hinzugefügt
+    UsageSession: createEntity('usage_sessions'),
+    ChatSession: createEntity('chat_sessions'),
+    Clan: createEntity('clans'),
+    Competition: createEntity('competitions'),
+    FunctionRating: createEntity('function_ratings'),
+    GearListing: createEntity('gear_listings'),
+    AppEvent: createEntity('app_events'),
+    BathymetricMap: createEntity('bathymetric_maps'),
+    DepthDataPoint: createEntity('depth_data_points'),
+    VotingLike: createEntity('voting_likes'),
+    WaterReview: createEntity('water_reviews'),
+    User: {
+      ...createEntity('profiles'),
+      me: auth.me.bind(auth),
+      filter: async (filters = {}) => {
+        let query = supabase.from('profiles').select('*');
+        Object.entries(filters).forEach(([k, v]) => { if (v !== undefined) query = query.eq(k, v); });
+        const { data, error } = await query;
+        if (error) throw error;
+        return data ?? [];
+      },
+    },
     _supabase: supabase,
   },
 };
