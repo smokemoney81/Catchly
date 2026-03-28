@@ -212,6 +212,15 @@ const analytics = {
 };
 
 // ─────────────────────────────────────────────
+// APP LOGS (Base44 Kompatibilität)
+// ─────────────────────────────────────────────
+const appLogs = {
+  async logUserInApp(path) {
+    console.debug('[appLogs] navigation:', path);
+  },
+};
+
+// ─────────────────────────────────────────────
 // EXPORT
 // ─────────────────────────────────────────────
 export const base44 = {
@@ -219,6 +228,7 @@ export const base44 = {
   functions,
   integrations,
   analytics,
+  appLogs,
   entities: {
     Catch: createEntity('catches'),
     Spot: createEntity('spots'),

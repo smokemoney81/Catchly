@@ -132,7 +132,7 @@ export default function Sidebar({ isOpen, setIsOpen, currentPageName }) {
         transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
-        <div className="flex flex-col" style={{ height: '100vh', height: '100dvh', maxHeight: '100vh', maxHeight: '100dvh' }}>
+        <div className="flex flex-col" style={{ height: '100dvh', maxHeight: '100dvh' }}>
           
           <div className="flex items-center justify-between p-6 border-b border-gray-800 flex-shrink-0">
             <AnimatePresence mode="wait">
